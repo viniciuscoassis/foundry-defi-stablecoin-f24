@@ -23,6 +23,8 @@
 
 pragma solidity ^0.8.20;
 
+import { DecentralizedStableCoin } from "./DecentralizedStableCoin.sol";
+
 /**
  * @title DSCEngine
  * @author Vinicius Assis
@@ -53,6 +55,8 @@ contract DSCEngine{
     /////////////////////
     mapping(address tokens => address priceFeed) private s_priceFeeds; //tokenToPriceFeeds
 
+    DecentralizedStableCoin private i_dsc;
+
     /////////////////
     // Modifiers   //
     /////////////////
@@ -79,6 +83,7 @@ contract DSCEngine{
         for(uint256 i = 0; i < tokenAddresses.length; i++){
             s_priceFeeds[tokenAddresses[i]] = priceFeeds[i];
         }
+        i_dsc = DecentralizedStableCoin(dscAddress);
     }
 
     ////////////////////////
