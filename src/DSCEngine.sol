@@ -55,6 +55,7 @@ contract DSCEngine is ReentrancyGuard {
     // State Variables //
     /////////////////////
     mapping(address tokens => address priceFeed) private s_priceFeeds; //tokenToPriceFeeds
+    mapping(address user => mapping(address token => uint256 amount)) private s_colateralDeposited;
 
     DecentralizedStableCoin private i_dsc;
 
@@ -103,7 +104,9 @@ contract DSCEngine is ReentrancyGuard {
     * @param tokenCollateralAddress The address of the token to deposit as collateral
     * @param amountCollateral The amount of the token to deposit as collateral
     */ 
-    function depositCollateral(address tokenCollateralAddress, uint256 amountCollateral) external moreThanZero(amountCollateral) isAllowedToken(tokenCollateralAddress) nonReentrant{}
+    function depositCollateral(address tokenCollateralAddress, uint256 amountCollateral) external moreThanZero(amountCollateral) isAllowedToken(tokenCollateralAddress) nonReentrant{
+        s_colateralDeposited[msg.sender][tokenCollateralAddress] += amountCollateral;
+    }
 
     function redeemCollateralForDsc() external {}
 
