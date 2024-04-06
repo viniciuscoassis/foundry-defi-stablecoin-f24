@@ -45,19 +45,20 @@ contract DSCEngine{
     //////////////
     // Errors   //
     //////////////
-    error DSCEngine_MustBeMoreThanZero();
+    error DSCEngine__MustBeMoreThanZero();
+    error DSCEngine__TokenAddressesAndPriceFeedsMustHaveSameLength();
 
     /////////////////////
     // State Variables //
     /////////////////////
-    mapping(address => bool) private s_tokenToAllowed;
+    mapping(address tokens => address priceFeed) private s_priceFeeds; //tokenToPriceFeeds
 
     /////////////////
     // Modifiers   //
     /////////////////
     modifier moreThanZero(uint256 _amount){
         if(_amount <= 0){
-            revert DSCEngine_MustBeMoreThanZero();
+            revert DSCEngine__MustBeMoreThanZero();
         }
         _;
     }
@@ -65,7 +66,20 @@ contract DSCEngine{
     /////////////////
     // Functions   //
     /////////////////
-    constructor() {}
+    constructor(
+        address[] memory tokenAddresses, 
+        address[] memory priceFeeds,
+        address dscAddress
+    ) {
+        // USD Price Feeds
+        if(tokenAddresses.length != priceFeeds.length){
+            revert DSCEngine__TokenAddressesAndPriceFeedsMustHaveSameLength();
+        }
+        // For example ETH/USD, BTC/USD, etc.
+        for(uint256 i = 0; i < tokenAddresses.length; i++){
+            s_priceFeeds[tokenAddresses[i]] = priceFeeds[i];
+        }
+    }
 
     ////////////////////////
     // External Functions //
