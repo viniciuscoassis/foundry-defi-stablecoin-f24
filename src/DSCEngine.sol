@@ -113,7 +113,11 @@ contract DSCEngine is ReentrancyGuard {
     ////////////////////////
     // External Functions //
     ////////////////////////
-    function depositCollateralAndMintDsc() external {}
+    function depositCollateralAndMintDsc(
+        address tokenCollateralAddress,
+        uint256 amountCollateral,
+        uint256 amoutDscToMint
+    ) external {}
 
     /**
      * @notice follows CEI
@@ -186,7 +190,7 @@ contract DSCEngine is ReentrancyGuard {
         // 150 * 50 = 7500 / 100 = (75 / 100) < 10
 
         // $1000 ETH / 100 DSC
-        // 1000 * 50 = 50000 / 100 = (500 / 100) > 1       
+        // 1000 * 50 = 50000 / 100 = (500 / 100) > 1
         return (collateralAdjustedForThreshold * PRECISION) / totalDscMinted;
     }
 
@@ -219,4 +223,4 @@ contract DSCEngine is ReentrancyGuard {
         // The returned value from CL will be 1000 * 10^8
         return ((uint256(price) * ADDITIONAL_FEED_PRECISION) * amount) / PRECISION;
     }
- }
+}

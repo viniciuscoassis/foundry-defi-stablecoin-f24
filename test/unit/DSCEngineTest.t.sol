@@ -25,7 +25,7 @@ contract DSCEngineTest is Test {
     function setUp() external {
         deployDSC = new DeployDSC();
         (dsc, engine, config) = deployDSC.run();
-        (ethUsdPriceFeed, wbtcUsdPriceFeed, weth, wbtc, ) = config.activeNetworkConfig();
+        (ethUsdPriceFeed, wbtcUsdPriceFeed, weth, wbtc,) = config.activeNetworkConfig();
 
         ERC20Mock(weth).mint(USER, STARTING_ERC20_BALANCE);
     }
@@ -33,7 +33,7 @@ contract DSCEngineTest is Test {
     ///////////////////////
     // Price tests       //
     ///////////////////////
-    function testGetUsdValue() view public {
+    function testGetUsdValue() public view {
         uint256 ethAmout = 15e18;
         // 15e18 * 2000/ETH = 30,000e18
         assertEq(engine.getUsdValue(weth, ethAmout), 30000e18);
