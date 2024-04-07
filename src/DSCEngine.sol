@@ -170,7 +170,7 @@ contract DSCEngine is ReentrancyGuard {
     // in order to redeem collateral:
     // 1. health factor must be over 1 AFTER collateral pulled
     function redeemCollateral(address tokenCollateralAddress, uint256 amountCollateral) public moreThanZero(amountCollateral) nonReentrant {
-        _redeemCollateral(tokenCollateralAddress, amountCollateral, msg.sender, msg.sender);
+        _redeemCollateral(msg.sender, msg.sender, tokenCollateralAddress, amountCollateral);
         _revertIfHealthFactorIsBroken(msg.sender);
     }
 
@@ -225,7 +225,7 @@ contract DSCEngine is ReentrancyGuard {
         uint256 tokenAmountFromDebtCovered = getTokenAmountFromUsd(collateral, debtToCover);
         uint256 bonusCollateral = (tokenAmountFromDebtCovered * LIQUIDATION_BONUS) / LIQUIDATION_PRECISION;
         uint256 totalCollateralToRedeem = tokenAmountFromDebtCovered + bonusCollateral;
-        _redeemCollateral(collateral, totalCollateralToRedeem, user, msg.sender);
+        _redeemCollateral(user, msg.sender, collateral, totalCollateralToRedeem);
         _burnDsc(debtToCover, user, msg.sender);
         uint256 endingUserHealthFactor = _healthFactor(user);
         if (endingUserHealthFactor < startingUserHealthFactor) {
@@ -254,7 +254,7 @@ contract DSCEngine is ReentrancyGuard {
         i_dsc.burn(amountDscToBurn);
     }
 
-    function _redeemCollateral(address tokenCollateralAddress, uint256 amountCollateral, address from, address to) private {
+    function _redeemCollateral( address from, address to, address tokenCollateralAddress, uint256 amountCollateral) private {
         s_colateralDeposited[from][tokenCollateralAddress] -= amountCollateral;
         emit CollateralRedeemed(from, to, tokenCollateralAddress, amountCollateral);
         bool success = IERC20(tokenCollateralAddress).transfer(to, amountCollateral);
