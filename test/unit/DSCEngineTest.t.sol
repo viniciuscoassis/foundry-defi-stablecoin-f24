@@ -29,6 +29,21 @@ contract DSCEngineTest is Test {
 
         ERC20Mock(weth).mint(USER, STARTING_ERC20_BALANCE);
     }
+    ///////////////////////
+    // Constructor tests //
+    ///////////////////////
+    address[] public tokenAddresses;
+    address[] public priceFeedAddresses;
+
+    function testRevertsIfTokenLengthDoesntMatchPriceFeeds() public {
+        tokenAddresses.push(weth);
+        priceFeedAddresses.push(ethUsdPriceFeed);
+        priceFeedAddresses.push(wbtcUsdPriceFeed);
+
+        vm.expectRevert(DSCEngine.DSCEngine__TokenAddressesAndPriceFeedsMustHaveSameLength.selector);
+        new DSCEngine(tokenAddresses, priceFeedAddresses, address(dsc));
+        
+    }
 
     ///////////////////////
     // Price tests       //
@@ -39,6 +54,14 @@ contract DSCEngineTest is Test {
         assertEq(engine.getUsdValue(weth, ethAmout), 30000e18);
     }
 
+    function testGetTokenAmountFromUsd() public view{
+        uint256 usdAmount = 100 ether;
+
+        uint256 expectedWeth = 0.05 ether;
+        // 100e18 / 2000/ETH = 0.05e18
+        assertEq(engine.getTokenAmountFromUsd(weth, usdAmount), expectedWeth);
+    }
+
     //////////////////////////////////
     // depositColateral tests       //
     //////////////////////////////////
@@ -47,5 +70,29 @@ contract DSCEngineTest is Test {
         ERC20Mock(weth).approve(address(engine), AMOUNT_COLLATERAL);
         vm.expectRevert(DSCEngine.DSCEngine__MustBeMoreThanZero.selector);
         engine.depositCollateral(weth, 0);
+    }
+
+    function testRevertsWithUnapprovedCollateral() public {
+        ERC20Mock ranToken = new ERC20Mock("RanToken", "RAN", USER, AMOUNT_COLLATERAL);
+        vm.prank(USER);
+        vm.expectRevert(DSCEngine.DSCEngine__TokenNotSupported.selector);
+        engine.depositCollateral(address(ranToken), AMOUNT_COLLATERAL);
+
+    }
+
+    modifier depositedCollateral() {
+        vm.startPrank(USER);
+        ERC20Mock(weth).approve(address(engine), AMOUNT_COLLATERAL);
+        engine.depositCollateral(weth, AMOUNT_COLLATERAL);
+        vm.stopPrank();
+        _;
+    }
+
+    function testCanDepositCollateralAndGetAccountInfo() public depositedCollateral {
+        (uint256 totalDscMinted, uint256 collateralValueInUsd) = engine.getAccountInformation(USER);
+        uint256 expectedTotalDscMinted = 0;
+        uint256 expectedDepositAmount = engine.getTokenAmountFromUsd(weth, collateralValueInUsd);
+        assertEq(totalDscMinted, expectedTotalDscMinted);
+        assertEq(expectedDepositAmount, AMOUNT_COLLATERAL);
     }
 }

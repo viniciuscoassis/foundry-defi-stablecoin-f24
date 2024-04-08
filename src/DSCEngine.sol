@@ -233,8 +233,6 @@ contract DSCEngine is ReentrancyGuard {
         }
     }
 
-    function getHealthFactor() external view returns (uint256) {}
-
     ///////////////////////////////////////
     // Private & Internal View Functions //
     ///////////////////////////////////////
@@ -271,6 +269,12 @@ contract DSCEngine is ReentrancyGuard {
         totalDscMinted = s_DSCMinted[user];
         collateralValueInUsd = getAccountCollateralValue(user);
     }
+
+    function _calculateHealthFactor(uint256 totalUsdMinted, uint256 collateralValueInUsd) private pure returns (uint256) {
+        if (totalUsdMinted == 0) return type(uint256).max;
+        uint256 collateralAdjustedForThreshold = (collateralValueInUsd * LIQUIDATION_THRESHOLD) / PRECISION;
+        return (collateralAdjustedForThreshold * PRECISION) / totalUsdMinted;
+    }
     /**
      * Returns how close to liquidation a user is.
      * If a user goes below 1, then they can get liquidated
@@ -278,16 +282,8 @@ contract DSCEngine is ReentrancyGuard {
      */
 
     function _healthFactor(address user) private view returns (uint256) {
-        // 1. total DSC minted
-        // 2. total collateral VALUE
-        (uint256 totalDscMinted, uint256 collateralValue) = _getAccountInformation(user);
-        uint256 collateralAdjustedForThreshold = (collateralValue * LIQUIDATION_THRESHOLD) / LIQUIDATION_PRECISION;
-        // $150 ETH / 100 DSC = 1.5
-        // 150 * 50 = 7500 / 100 = (75 / 100) < 10
-
-        // $1000 ETH / 100 DSC
-        // 1000 * 50 = 50000 / 100 = (500 / 100) > 1
-        return (collateralAdjustedForThreshold * PRECISION) / totalDscMinted;
+        (uint256 totalDscMinted, uint256 collateralValueInUsd) = _getAccountInformation(user);
+        return _calculateHealthFactor(totalDscMinted, collateralValueInUsd);
     }
 
     // 1. Check health factor (do they have enough collateral?)
@@ -302,6 +298,14 @@ contract DSCEngine is ReentrancyGuard {
     ///////////////////////////////////////
     // Public & External View Functions  //
     ///////////////////////////////////////
+    function calculateHealthFactor(uint256 totalUsdMinted, uint256 totalCollateralValueInUsd) external pure returns (uint256) {
+        return _calculateHealthFactor(totalUsdMinted, totalCollateralValueInUsd);
+    }
+
+    function getHealthFactor(address user) external view returns (uint256) {
+        return _healthFactor(user);
+    }
+
     function getTokenAmountFromUsd(address token, uint256 amountInWei) public view returns (uint256) {
         AggregatorV3Interface priceFeed = AggregatorV3Interface(s_priceFeeds[token]);
         (, int256 price,,,) = priceFeed.latestRoundData();
@@ -325,5 +329,9 @@ contract DSCEngine is ReentrancyGuard {
         // 1 ETH = $1000
         // The returned value from CL will be 1000 * 10^8
         return ((uint256(price) * ADDITIONAL_FEED_PRECISION) * amount) / PRECISION;
+    }
+
+    function getAccountInformation(address user) external view returns (uint256 totalDscMinted, uint256 collateralValueInUsd) {
+        (totalDscMinted, collateralValueInUsd) = _getAccountInformation(user);
     }
 }
