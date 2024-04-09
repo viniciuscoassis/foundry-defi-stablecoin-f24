@@ -15,6 +15,7 @@ import {DSCEngine} from "../../src/DSCEngine.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
 import {StdInvariant} from "forge-std/StdInvariant.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Handler} from "./Handler.t.sol";
 
 contract Invariants is StdInvariant, Test {
     DSCEngine engine;
@@ -23,12 +24,14 @@ contract Invariants is StdInvariant, Test {
     DeployDSC deployer;
     address weth;
     address wbtc;
+    Handler handler;
 
     function setUp() external {
         deployer = new DeployDSC();
         (dsc, engine, config) = deployer.run();
         (,,weth,wbtc,) = config.activeNetworkConfig();
-        targetContract(address(engine));
+        handler = new Handler(engine, dsc);
+        targetContract(address(handler));
     }
 
     function invariant_protocolMustHaveMoreValueThanTotalSupply() public view {
