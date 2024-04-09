@@ -16,7 +16,7 @@ import {HelperConfig} from "../../script/HelperConfig.s.sol";
 import {StdInvariant} from "forge-std/StdInvariant.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract OpenInvariantsTest is StdInvariant, Test {
+contract Invariants is StdInvariant, Test {
     DSCEngine engine;
     DecentralizedStableCoin dsc;
     HelperConfig config;
